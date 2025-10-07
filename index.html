@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Métricas Comerciais</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen flex flex-col items-center p-6">
+
+    <header class="mb-6 text-center">
+        <h1 class="text-3xl font-bold text-orange-600">📅 Métricas Comerciais</h1>
+        <p class="text-gray-600 mt-2">Registre prospecções, vendas e instalações diárias</p>
+    </header>
+
+    <!-- Controles do calendário -->
+    <div class="flex items-center justify-between w-full max-w-3xl mb-4">
+        <button id="prevMonth" class="bg-orange-500 text-white px-3 py-1 rounded hover:bg-orange-600">← Mês
+            anterior</button>
+        <h2 id="monthYear" class="text-xl font-semibold"></h2>
+        <button id="nextMonth" class="bg-orange-500 text-white px-3 py-1 rounded hover:bg-orange-600">Próximo mês
+            →</button>
+    </div>
+
+    <!-- Calendário -->
+    <div id="calendar" class="grid grid-cols-7 gap-2 w-full max-w-3xl bg-white p-4 rounded-2xl shadow-md"></div>
+
+    <!-- Modal -->
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden">
+        <div class="bg-white p-6 rounded-2xl shadow-lg w-96">
+            <h3 id="modalDate" class="text-lg font-semibold text-orange-600 mb-4"></h3>
+
+            <div class="space-y-2">
+                <label class="block">
+                    Prospecções:
+                    <input type="number" id="prospeccoes" class="w-full border rounded px-2 py-1">
+                </label>
+                <label class="block">
+                    Vendas:
+                    <input type="number" id="vendas" class="w-full border rounded px-2 py-1">
+                </label>
+                <label class="block">
+                    Instalações:
+                    <input type="number" id="instalacoes" class="w-full border rounded px-2 py-1">
+                </label>
+                <label class="block">
+                    Concluídas:
+                    <input type="number" id="concluidas" class="w-full border rounded px-2 py-1">
+                </label>
+            </div>
+
+            <div class="flex justify-end mt-4 space-x-2">
+                <button id="closeModal" class="px-3 py-1 rounded bg-gray-300 hover:bg-gray-400">Cancelar</button>
+                <button id="saveData"
+                    class="px-3 py-1 rounded bg-orange-500 text-white hover:bg-orange-600">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
+
+</html>
