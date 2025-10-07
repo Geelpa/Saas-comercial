@@ -16,49 +16,32 @@
     </header>
 
     <!-- Controles do calendário -->
-    <div class="flex items-center justify-between w-full max-w-3xl mb-4">
-        <button id="prevMonth" class="bg-orange-500 text-white px-3 py-1 rounded hover:bg-orange-600">← Mês
-            anterior</button>
-        <h2 id="monthYear" class="text-xl font-semibold"></h2>
-        <button id="nextMonth" class="bg-orange-500 text-white px-3 py-1 rounded hover:bg-orange-600">Próximo mês
-            →</button>
+    <div class="flex items-center justify-between mb-4">
+        <button id="prevMonth" class="px-3 py-1 bg-gray-200 rounded">◀</button>
+        <h2 id="monthYear" class="text-lg font-bold"></h2>
+        <button id="nextMonth" class="px-3 py-1 bg-gray-200 rounded">▶</button>
     </div>
 
-    <!-- Calendário -->
-    <div id="calendar" class="grid grid-cols-7 gap-2 w-full max-w-3xl bg-white p-4 rounded-2xl shadow-md"></div>
+    <div id="calendar" class="grid grid-cols-7 gap-2"></div>
+
+    <div id="metricasResumo" class="mt-6 text-sm"></div>
 
     <!-- Modal -->
-    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden">
-        <div class="bg-white p-6 rounded-2xl shadow-lg w-96">
-            <h3 id="modalDate" class="text-lg font-semibold text-orange-600 mb-4"></h3>
-
-            <div class="space-y-2">
-                <label class="block">
-                    Prospecções:
-                    <input type="number" id="prospeccoes" class="w-full border rounded px-2 py-1">
-                </label>
-                <label class="block">
-                    Vendas:
-                    <input type="number" id="vendas" class="w-full border rounded px-2 py-1">
-                </label>
-                <label class="block">
-                    Instalações:
-                    <input type="number" id="instalacoes" class="w-full border rounded px-2 py-1">
-                </label>
-                <label class="block">
-                    Concluídas:
-                    <input type="number" id="concluidas" class="w-full border rounded px-2 py-1">
-                </label>
-            </div>
-
-            <div class="flex justify-end mt-4 space-x-2">
-                <button id="closeModal" class="px-3 py-1 rounded bg-gray-300 hover:bg-gray-400">Cancelar</button>
-                <button id="saveData"
-                    class="px-3 py-1 rounded bg-orange-500 text-white hover:bg-orange-600">Salvar</button>
+    <div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+        <div class="bg-white p-6 rounded-xl w-80 shadow-xl">
+            <h2 class="text-lg font-semibold mb-4">Registrar métricas</h2>
+            <form id="dataForm" class="space-y-2">
+                <input type="number" name="prospeccoes" placeholder="Prospecções" class="w-full border rounded p-2" />
+                <input type="number" name="vendas" placeholder="Vendas" class="w-full border rounded p-2" />
+                <input type="number" name="instalacoes" placeholder="Instalações" class="w-full border rounded p-2" />
+                <input type="number" name="concluidas" placeholder="Concluídas" class="w-full border rounded p-2" />
+            </form>
+            <div class="flex justify-end gap-2 mt-4">
+                <button id="closeModal" class="px-3 py-1 bg-gray-300 rounded">Cancelar</button>
+                <button id="saveBtn" class="px-3 py-1 bg-orange-500 text-white rounded">Salvar</button>
             </div>
         </div>
     </div>
-
     <script type="module" src="script.js"></script>
 </body>
 

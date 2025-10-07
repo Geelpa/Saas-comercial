@@ -1,139 +1,186 @@
 // script.js
 import { db } from "./firebase-config.js";
 import {
-    collection,
     doc,
     setDoc,
-    getDoc
+    getDoc,
+    collection,
+    getDocs,
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
+// ============================
+// Elementos principais
+// ============================
 const calendar = document.getElementById("calendar");
 const monthYear = document.getElementById("monthYear");
 const modal = document.getElementById("modal");
-const modalDate = document.getElementById("modalDate");
-
-const prevMonthBtn = document.getElementById("prevMonth");
-const nextMonthBtn = document.getElementById("nextMonth");
-const closeModal = document.getElementById("closeModal");
-const saveData = document.getElementById("saveData");
-
-const inputProspeccoes = document.getElementById("prospeccoes");
-const inputVendas = document.getElementById("vendas");
-const inputInstalacoes = document.getElementById("instalacoes");
-const inputConcluidas = document.getElementById("concluidas");
+const closeModalBtn = document.getElementById("closeModal");
+const saveBtn = document.getElementById("saveBtn");
+const form = document.getElementById("dataForm");
 
 let currentDate = new Date();
 let selectedDate = null;
 
-async function renderCalendar(date) {
-    calendar.innerHTML = "";
+// ============================
+// Função principal: gerar calendário
+// ============================
+async function generateCalendar(date) {
     const year = date.getFullYear();
     const month = date.getMonth();
 
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
+    const firstDayIndex = firstDay.getDay();
+    const daysInMonth = lastDay.getDate();
 
-    const firstWeekday = firstDay.getDay();
-    const totalDays = lastDay.getDate();
+    // Nome do mês
+    const monthNames = [
+        "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+        "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+    ];
+    monthYear.textContent = `${monthNames[month]} ${year}`;
 
-    monthYear.textContent = date.toLocaleDateString("pt-BR", {
-        month: "long",
-        year: "numeric",
+    // Carregar dados do Firestore
+    const snapshot = await getDocs(collection(db, "metricas"));
+    const registros = {};
+    snapshot.forEach((doc) => {
+        registros[doc.id] = doc.data();
     });
 
-    for (let i = 0; i < firstWeekday; i++) {
-        const empty = document.createElement("div");
-        calendar.appendChild(empty);
+    // Gerar HTML dos dias (renderização em lote)
+    let daysHTML = "";
+
+    // Dias em branco antes do primeiro dia
+    for (let i = 0; i < firstDayIndex; i++) {
+        daysHTML += `<div class="w-12 h-12"></div>`;
     }
 
-    for (let day = 1; day <= totalDays; day++) {
-        const cell = document.createElement("div");
-        cell.className =
-            "p-2 text-center border rounded cursor-pointer hover:bg-orange-100 relative";
+    // Dias do mês
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dateKey = `${year}-${month + 1}-${day}`;
+        const data = registros[dateKey];
 
-        const spanDay = document.createElement("div");
-        spanDay.textContent = day;
-        cell.appendChild(spanDay);
+        const hasData = data ? "bg-orange-200 border-orange-400" : "bg-gray-50";
+        const metrics = data
+            ? `<div class='text-xs text-gray-600'>
+          ${data.vendas ?? 0} vendas
+        </div>`
+            : "";
 
-        // Exibe resumo do dia (busca Firestore)
-        const key = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-        const docRef = doc(db, "metrics", key);
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            const resumo = document.createElement("div");
-            resumo.className = "text-xs text-gray-600 mt-1";
-            resumo.innerHTML = `
-        <span>Prospects: ${data.prospeccoes ?? 0}</span>
-        <span>Vendas: ${data.vendas ?? 0}</span>
-        <span>Agendados: ${data.instalacoes} </ span>
-        <span>Instalados: ${data.concluidas} </span>
-      `;
-            cell.appendChild(resumo);
-        }
-
-        cell.addEventListener("click", () => openModal(year, month, day));
-        calendar.appendChild(cell);
+        daysHTML += `
+      <div
+        data-date="${dateKey}"
+        class="day cursor-pointer w-12 h-12 flex flex-col justify-center items-center rounded-lg border ${hasData} hover:bg-orange-100 transition"
+      >
+        <span class="text-sm font-medium">${day}</span>
+        ${metrics}
+      </div>`;
     }
+
+    // Renderizar tudo de uma vez
+    calendar.innerHTML = daysHTML;
+
+    // Adicionar evento de clique nos dias
+    document.querySelectorAll(".day").forEach((el) => {
+        el.addEventListener("click", () => openModal(el.dataset.date));
+    });
 }
 
-async function openModal(year, month, day) {
-    selectedDate = new Date(year, month, day);
-    const key = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    modalDate.textContent = selectedDate.toLocaleDateString("pt-BR");
-
-    // Busca dados existentes do dia
-    const docRef = doc(db, "metrics", key);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-        const data = docSnap.data();
-        inputProspeccoes.value = data.prospeccoes ?? 0;
-        inputVendas.value = data.vendas ?? 0;
-        inputInstalacoes.value = data.instalacoes ?? 0;
-        inputConcluidas.value = data.concluidas ?? 0;
-    } else {
-        inputProspeccoes.value = "";
-        inputVendas.value = "";
-        inputInstalacoes.value = "";
-        inputConcluidas.value = "";
-    }
-
+// ============================
+// Modal de edição dos dados
+// ============================
+async function openModal(dateKey) {
+    selectedDate = dateKey;
     modal.classList.remove("hidden");
+
+    const ref = doc(db, "metricas", dateKey);
+    const snapshot = await getDoc(ref);
+
+    if (snapshot.exists()) {
+        const data = snapshot.data();
+        form.prospeccoes.value = data.prospeccoes ?? 0;
+        form.vendas.value = data.vendas ?? 0;
+        form.instalacoes.value = data.instalacoes ?? 0;
+        form.concluidas.value = data.concluidas ?? 0;
+    } else {
+        form.reset();
+    }
 }
 
-closeModal.addEventListener("click", () => {
+closeModalBtn.addEventListener("click", () => {
     modal.classList.add("hidden");
 });
 
-saveData.addEventListener("click", async () => {
+// ============================
+// Salvar no Firestore
+// ============================
+saveBtn.addEventListener("click", async () => {
     if (!selectedDate) return;
 
-    const year = selectedDate.getFullYear();
-    const month = selectedDate.getMonth();
-    const day = selectedDate.getDate();
-    const key = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-
     const data = {
-        prospeccoes: Number(inputProspeccoes.value) || 0,
-        vendas: Number(inputVendas.value) || 0,
-        instalacoes: Number(inputInstalacoes.value) || 0,
-        concluidas: Number(inputConcluidas.value) || 0,
+        prospeccoes: Number(form.prospeccoes.value) || 0,
+        vendas: Number(form.vendas.value) || 0,
+        instalacoes: Number(form.instalacoes.value) || 0,
+        concluidas: Number(form.concluidas.value) || 0,
     };
 
-    await setDoc(doc(db, "metrics", key), data);
+    await setDoc(doc(db, "metricas", selectedDate), data);
+
     modal.classList.add("hidden");
-    renderCalendar(currentDate);
+    generateCalendar(currentDate); // atualizar exibição
+    calcularMétricas();
 });
 
-prevMonthBtn.addEventListener("click", () => {
+// ============================
+// Navegação entre meses
+// ============================
+document.getElementById("prevMonth").addEventListener("click", () => {
     currentDate.setMonth(currentDate.getMonth() - 1);
-    renderCalendar(currentDate);
+    generateCalendar(currentDate);
 });
 
-nextMonthBtn.addEventListener("click", () => {
+document.getElementById("nextMonth").addEventListener("click", () => {
     currentDate.setMonth(currentDate.getMonth() + 1);
-    renderCalendar(currentDate);
+    generateCalendar(currentDate);
 });
 
-renderCalendar(currentDate);
+// ============================
+// Cálculo de métricas gerais
+// ============================
+async function calcularMétricas() {
+    const snapshot = await getDocs(collection(db, "metricas"));
+
+    let totalProspeccoes = 0;
+    let totalVendas = 0;
+    let totalInstalacoes = 0;
+    let totalConcluidas = 0;
+
+    snapshot.forEach((doc) => {
+        const d = doc.data();
+        totalProspeccoes += d.prospeccoes || 0;
+        totalVendas += d.vendas || 0;
+        totalInstalacoes += d.instalacoes || 0;
+        totalConcluidas += d.concluidas || 0;
+    });
+
+    const taxaSucesso =
+        totalInstalacoes > 0
+            ? ((totalConcluidas / totalInstalacoes) * 100).toFixed(2)
+            : 0;
+
+    document.getElementById("metricasResumo").innerHTML = `
+    <p><b>Prospecções:</b> ${totalProspeccoes}</p>
+    <p><b>Vendas:</b> ${totalVendas}</p>
+    <p><b>Instalações:</b> ${totalInstalacoes}</p>
+    <p><b>Concluídas:</b> ${totalConcluidas}</p>
+    <p class="mt-2 text-orange-600 font-semibold">
+      Taxa de sucesso: ${taxaSucesso}%
+    </p>
+  `;
+}
+
+// ============================
+// Inicialização
+// ============================
+generateCalendar(currentDate);
+calcularMétricas();
